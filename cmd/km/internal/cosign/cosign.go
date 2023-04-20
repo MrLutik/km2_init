@@ -7,6 +7,7 @@ import (
 	"crypto/x509"
 	"encoding/pem"
 	"fmt"
+	"os"
 
 	"github.com/google/go-containerregistry/pkg/name"
 	"github.com/sigstore/cosign/pkg/cosign"
@@ -31,24 +32,32 @@ func VerifyImageSignature(ctx context.Context, imageRef, pubKey string) (bool, e
 	if err != nil {
 		return false, fmt.Errorf("failed to parse public key: %w", err)
 	}
+	// Get ecdsa.PublickKey by type assertion
 	ecdsaPubKey, ok := pub.(*ecdsa.PublicKey)
 	if !ok {
 		fmt.Println("public key is not of type *ecdsa.PublicKey")
 		panic("fuck!")
 	}
 
+	// Get image reference
 	ref, err := name.ParseReference(imageRef)
 	if err != nil {
 		return false, fmt.Errorf("failed to parse image reference: %w", err)
 	}
 
+	// Create a signature verifier for an ECDSA signature algorithm using a public key
+	// and the SHA256 cryptographic hash function, and then setting the signature verifier as an option for verifying a signed image.
 	verifier, err := signature.LoadECDSAVerifier(ecdsaPubKey, crypto.SHA256)
 	co := &cosign.CheckOpts{
 		SigVerifier: verifier,
 	}
 
 	signatures, verified, err := cosign.VerifyImageSignatures(ctx, ref, co)
-	_ = signatures // Maybe I will use it in future
+	for _, sig := range signatures {
+		fmt.Fprintf(os.Stdout, "Signature: %s\n", func() string { sig, _ := sig.Base64Signature(); return sig }())
+		fmt.Fprintf(os.Stdout, "Payload: %s\n", func() string { payload, _ := sig.Payload(); return string(payload) }())
+		fmt.Fprintln(os.Stdout, "====")
+	} // Maybe I will use it in future
 
 	return verified, nil
 

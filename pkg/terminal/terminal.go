@@ -1,5 +1,0 @@
-package terminal
-
-func terminal() {
-
-}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/Masterminds/semver"
 	"github.com/mrlutik/km2_init/km/internal/cosign"
+	"github.com/mrlutik/km2_init/km/internal/docker"
 )
 
 func isValidSemVer(input string) error {
@@ -46,14 +47,15 @@ func main() {
 
 	baseImageName = fmt.Sprintf("ghcr.io/kiracore/docker/base-image:%s", baseImageVer)
 
-	// err := cosign.VerifyDockerImage(ctx, baseImageName, DockerImagePubKey)
-	// if err != nil {
-	// 	fmt.Fprintln(os.Stderr, err)
-	// }
-
 	if verified, err := cosign.VerifyImageSignature(ctx, baseImageName, cosign.DockerImagePubKey); err != nil || verified != true {
 		fmt.Fprintln(os.Stderr, "verification failed. err: ", err)
+		panic(err)
 	}
 	fmt.Fprintln(os.Stdout, "Image verified!")
+
+	// Pull image
+	if err := docker.PullImage(ctx, baseImageName); err != nil {
+		panic(err)
+	}
 
 }
