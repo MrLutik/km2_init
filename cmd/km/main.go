@@ -12,6 +12,7 @@ import (
 	"github.com/mrlutik/km2_init/km/internal/cosign"
 	"github.com/mrlutik/km2_init/km/internal/docker"
 	"golang.org/x/oauth2"
+
 )
 
 func isValidSemVer(input string) error {
@@ -60,6 +61,7 @@ func main() {
 	if err := docker.PullImage(ctx, baseImageName); err != nil {
 		panic(err)
 	}
+
 	r := adapters.Repositories{}
 	kiraRepos := []string{"sekai", "interx"}
 	kiraGit := "KiraCore"
@@ -78,4 +80,5 @@ func main() {
 
 	adapters.DownloadBinaryFromRepo(ctx, client, "KiraCore", "sekai", "sekai-linux-amd64.deb")
 	adapters.DownloadBinaryFromRepo(ctx, client, "KiraCore", "interx", "interx-linux-amd64.deb")
+
 }
