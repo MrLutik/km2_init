@@ -7,8 +7,12 @@ import (
 	"os"
 
 	"github.com/Masterminds/semver"
+	"github.com/google/go-github/github"
+	"github.com/mrlutik/km2_init/km/internal/adapters"
 	"github.com/mrlutik/km2_init/km/internal/cosign"
 	"github.com/mrlutik/km2_init/km/internal/docker"
+	"golang.org/x/oauth2"
+
 )
 
 func isValidSemVer(input string) error {
@@ -57,5 +61,24 @@ func main() {
 	if err := docker.PullImage(ctx, baseImageName); err != nil {
 		panic(err)
 	}
+
+	r := adapters.Repositories{}
+	kiraRepos := []string{"sekai", "interx"}
+	kiraGit := "KiraCore"
+	for _, v := range kiraRepos {
+		r.Set(kiraGit, v)
+	}
+	r = adapters.Fetch(r, os.Getenv("GITHUB_TOKEN"))
+
+	ts := oauth2.StaticTokenSource(
+		&oauth2.Token{AccessToken: os.Getenv("GITHUB_TOKEN")},
+	)
+	tc := oauth2.NewClient(ctx, ts)
+
+	// Initialize GitHub client
+	client := github.NewClient(tc)
+
+	adapters.DownloadBinaryFromRepo(ctx, client, "KiraCore", "sekai", "sekai-linux-amd64.deb")
+	adapters.DownloadBinaryFromRepo(ctx, client, "KiraCore", "interx", "interx-linux-amd64.deb")
 
 }
